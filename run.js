@@ -8,6 +8,7 @@ function run(code) {
 	// Eval Source + Run In Parent Scope:
 	// JSFuck executes the payload via eval(), so we hook eval
 	eval = function (src) {
+		if (!src) return
 		executed = true
 		result += src + "\n\n"
 	}
@@ -16,12 +17,24 @@ function run(code) {
 	// In this case JSFuck executes via native Function resolution:
 	// [][at][constructor](payload)()
 	Array.prototype.at.constructor = function (src) {
-		if (src === "return eval") {
+		if (!src) return function () {}
+
+		if (src === "return eval" || src === "return/false/") {
 			return OATC.call(this, src)
 		}
 
+		const hasEscapes = /\\[0-7]{2,3}/.test(src)
+
+		if (hasEscapes) {
+			try {
+				const decoded = Function(src)()
+				if (decoded) result += decoded.toString()
+			} catch (e) {}
+		} else {
+			result += src
+		}
+
 		executed = true
-		result += src + "\n\n"
 		return function () {}
 	}
 
@@ -30,6 +43,7 @@ function run(code) {
 		Function("return " + code)()
 	} catch (e) {
 		result = String(e)
+		throw e
 	}
 
 	// If no execution path was triggered, this is a pure expression.
