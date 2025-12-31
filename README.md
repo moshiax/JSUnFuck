@@ -35,8 +35,18 @@ If no execution path is triggered, the input is treated as a **pure JSFuck
 expression** and evaluated as a value.
 
  Just show me the code
-→ **[run.js](run.js)**
+→ **[unfuck.js](unfuck.js)**
 ---
+
+## Known issues
+
+### Symbol "F" decoding
+
+The JSFuck mapping for the symbol **F**:
+
+'F': '(+[]+Function)[10]'
+
+does not reliably decode to the literal character `F` and enters eval as "(" (see tests)
 
 ## Security
 

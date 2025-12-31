@@ -1,0 +1,134 @@
+<script src="jsfuck.js"></script>
+<script src="unfuck.js"></script>
+<meta charset="utf-8">
+<style>
+	body { background: #121212; color: #eee; font-family: monospace; padding: 20px; }
+	table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+	th, td { border: 1px solid #444; padding: 6px 10px; text-align: left; }
+	th { background: #222; }
+	td.ok { background: #2e7d32; color: #fff; }
+	td.fail { background: #c62828; color: #fff; }
+	td.error { background: #f9a825; color: #000; }
+	#summary { margin-bottom: 20px; }
+</style>
+<div id="summary"></div>
+<table id="results">
+	<thead>
+		<tr>
+			<th>#</th>
+			<th>Mode</th>
+			<th>Source</th>
+			<th>Result</th>
+			<th>Returned</th>
+		</tr>
+	</thead>
+	<tbody></tbody>
+</table>
+
+<script>
+const modes = [
+	{ eval: false, scope: false, name: "eval off / scope off" },
+	{ eval: true,  scope: false, name: "eval on / scope off" },
+	{ eval: true,  scope: true,  name: "eval on / scope on" }
+]
+
+function addRow(index, modeName, source, status, returned) {
+	const tbody = document.querySelector("#results tbody")
+	const tr = document.createElement("tr")
+
+	const tdIndex = document.createElement("td")
+	tdIndex.textContent = index
+
+	const tdMode = document.createElement("td")
+	tdMode.textContent = modeName
+
+	const tdSource = document.createElement("td")
+	tdSource.textContent = source
+
+	const tdReturned = document.createElement("td")
+	tdReturned.textContent = returned
+
+	const tdStatus = document.createElement("td")
+	tdStatus.textContent = status
+	tdStatus.className = status.toLowerCase()
+
+	tr.append(tdIndex, tdMode, tdSource, tdReturned, tdStatus)
+	tbody.appendChild(tr)
+}
+
+let totalTests = 0
+let passedTests = 0
+
+function test(source, index) {
+	modes.forEach(m => {
+		totalTests++
+		try {
+			const encoded = JSFuck.encode(source, m.eval, m.scope)
+			const decoded = unfuck(encoded)
+			const ok = decoded.trim() === source.trim()
+			if (ok) passedTests++
+			addRow(index, m.name, source, ok ? "OK" : "FAIL", decoded)
+		} catch (err) {
+			addRow(index, m.name, source, "ERROR", "")
+		}
+		updateSummary()
+	})
+}
+
+function updateSummary() {
+	const summary = document.querySelector("#summary")
+	const percent = totalTests ? ((passedTests / totalTests) * 100).toFixed(2) : 0
+	summary.textContent = `${passedTests}/${totalTests} (${percent}%)`
+}
+
+const scripts = [
+	'false', 'true', 'undefined', 'NaN', 'Infinity',
+	'Array', 'Number', 'String', 'Boolean', 'Function', 'RegExp',
+	'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
+	'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
+	' ', '!', '"', '#', '$', '%', '&', "'", '(', ')', '*', '+', ',', '-', '.', '/', ':', ';', '<', '=', '>', '?', '@', '[', '\\', ']', '^', '_', '`', '{', '|', '}', '~',
+	'1+2',
+	'1/0',
+	'0/0',
+	'NaN',
+	'Infinity',
+	'"plain string"',
+	"'𝒖𝒏𝒊𝒄𝒐𝒅e'",
+	'String(123)',
+	'"\\u0061\\u0062\\u0063"',
+	'decodeURIComponent("pr%D0%B8vet")',
+	'encodeURIComponent("prиvet")',
+	'console.log("hello")',
+	'console.log(1,2,3)',
+	'({a:1,b:2}).a',
+	'({}).toString()',
+	'Object.keys({x:1,y:2}).join(",")',
+	'JSON.stringify({a:1})',
+	'[1,2,3].length',
+	'[1,2,3].map(x=>x*2)',
+	'[1,2,3].map(x=>x*2).join(",")',
+	'[,,].length',
+	'Math.max(5,10)',
+	'Math.min(-1,1)',
+	'Math.abs(-5)',
+	'Number("123")',
+	'Number("abc")',
+	'RegExp("test")',
+	'/test/.test("test")',
+	'new RegExp("a+b")',
+	'Date()',
+	'new Date(0).getTime()',
+	'typeof eval',
+	'typeof Date',
+	'typeof RegExp',
+	'JSON.parse("{bad}")',
+	'null.foo',
+	'undefined',
+	'null',
+	'true',
+	'false'
+];
+
+scripts.forEach(test)
+</script>
+

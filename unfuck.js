@@ -1,4 +1,4 @@
-function run(code) {
+function unfuck(code) {
 	let executed = false
 	let result = ""
 
@@ -19,7 +19,7 @@ function run(code) {
 	Array.prototype.at.constructor = function (src) {
 		if (!src) return function () {}
 
-		if (src === "return eval" || src === "return/false/") {
+		if (["return eval", "return/false/", "return escape", "return Date"].includes(src)) {
 			return OATC.call(this, src)
 		}
 
