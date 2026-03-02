@@ -4,19 +4,7 @@ function unfuck(code) {
 
 	const OE = eval
 	const OATC = Array.prototype.at.constructor
-
-	// Eval Source + Run In Parent Scope:
-	// JSFuck executes the payload via eval(), so we hook eval
-	eval = function (src) {
-		if (!src) return
-		executed = true
-		result += src + "\n\n"
-	}
-
-	// If eval was not used, assume Run In Parent Scope is unchecked.
-	// In this case JSFuck executes via native Function resolution:
-	// [][at][constructor](payload)()
-	Array.prototype.at.constructor = function (src) {
+	const HOOKED_ATC = function (src) {
 		if (!src) return function () {}
 
 		if (["return eval", "return/false/", "return escape", "return Date"].includes(src)) {
@@ -38,6 +26,19 @@ function unfuck(code) {
 		return function () {}
 	}
 
+	// Eval Source + Run In Parent Scope:
+	// JSFuck executes the payload via eval(), so we hook eval
+	eval = function (src) {
+		if (!src) return
+		executed = true
+		result += src + "\n\n"
+	}
+
+	// If eval was not used, assume Run In Parent Scope is unchecked.
+	// In this case JSFuck executes via native Function resolution:
+	// [][at][constructor](payload)()
+	HOOKED_ATC.toString = OATC.toString.bind(OATC)
+	Array.prototype.at.constructor = HOOKED_ATC
 	// Trigger execution of the original JSFuck code
 	try {
 		Function("return " + code)()

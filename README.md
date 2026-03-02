@@ -38,16 +38,6 @@ expression** and evaluated as a value.
 → **[unfuck.js](unfuck.js)**
 ---
 
-## Known issues
-
-### Symbol "F" decoding
-
-The JSFuck mapping for the symbol **F**:
-
-'F': '(+[]+Function)[10]'
-
-does not reliably decode to the literal character `F` and enters eval as "(" (see tests)
-
 ## Security
 
 **This tool is conditionally safe.**
