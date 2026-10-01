@@ -1,28 +1,31 @@
 function unfuck(code) {
+
+	if (typeof code !== "string" || !/^[\[\]\(\)!+\s]+$/.test(code)) {
+		return "Input isnt valid JSFuck."
+	}
+
 	let executed = false
 	let result = ""
 
 	const OE = eval
 	const OATC = Array.prototype.at.constructor
+
+	function capture(source) {
+		executed = true
+		result = source
+	}
+
 	const HOOKED_ATC = function (src) {
 		if (!src) return function () {}
 
-		if (["return eval", "return/false/", "return escape", "return Date"].includes(src)) {
-			return OATC.call(this, src)
+		if (/^\s*return\b/.test(src)) {
+			const fn = OATC.call(this, src)
+			const value = fn()
+			if (typeof value === "string") capture(value)
+			return fn
 		}
 
-		const hasEscapes = /\\[0-7]{2,3}/.test(src)
-
-		if (hasEscapes) {
-			try {
-				const decoded = Function(src)()
-				if (decoded) result += decoded.toString()
-			} catch (e) {}
-		} else {
-			result += src
-		}
-
-		executed = true
+		capture(src)
 		return function () {}
 	}
 
@@ -30,8 +33,7 @@ function unfuck(code) {
 	// JSFuck executes the payload via eval(), so we hook eval
 	eval = function (src) {
 		if (!src) return
-		executed = true
-		result += src + "\n\n"
+		capture(src + "\n\n")
 	}
 
 	// If eval was not used, assume Run In Parent Scope is unchecked.
@@ -41,25 +43,25 @@ function unfuck(code) {
 	Array.prototype.at.constructor = HOOKED_ATC
 	// Trigger execution of the original JSFuck code
 	try {
-		Function("return " + code)()
-	} catch (e) {
-		result = String(e)
-		throw e
-	}
-
-	// If no execution path was triggered, this is a pure expression.
-	// Evaluate it normally and return the resulting value.
-	if (!executed && !result) {
 		try {
-			result = String(Function("return " + code)())
+			Function("return " + code)()
 		} catch (e) {
 			result = String(e)
 		}
-	}
 
-	// Restore original environment
-	eval = OE
-	Array.prototype.at.constructor = OATC
+		// If no execution path was triggered, this is a pure expression.
+		// Evaluate it normally and return the resulting value.
+		if (!executed && !result) {
+			try {
+				result = String(Function("return " + code)())
+			} catch (e) {
+				result = String(e)
+			}
+		}
+	} finally {
+		eval = OE
+		Array.prototype.at.constructor = OATC
+	}
 
 	return result
 }
